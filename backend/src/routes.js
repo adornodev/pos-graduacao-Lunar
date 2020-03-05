@@ -1,17 +1,11 @@
 import { Router } from 'express';
 import 'express-async-errors';
 
-// import FileController from './app/controllers/FileController';
-// import OrderController from './app/controllers/OrderController';
+import EventController from './app/controllers/EventController';
 
 const routes = Router();
 
-/*
-routes.post('/deliverymen', authMiddleware, DeliveryManController.store);
-routes.put('/deliverymen/:id', authMiddleware, DeliveryManController.update);
-routes.delete('/deliverymen/:id', authMiddleware, DeliveryManController.delete);
-routes.get('/deliverymen/:id', DeliveryManController.show);
-routes.get('/deliverymen', authMiddleware, DeliveryManController.index);
-*/
+routes.get('/events', EventController.index);
+routes.post('/events', EventController.store);
 
 export default routes;
