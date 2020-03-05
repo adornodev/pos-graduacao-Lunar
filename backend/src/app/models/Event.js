@@ -3,14 +3,19 @@ import PointSchema from './utils/PointSchema';
 
 const eventSchema = new mongoose.Schema(
   {
-    pothole: Boolean,
-    timestamp: { type: Date, min: '1970-01-01' },
+    pothole: { type: Boolean },
+    timestamp: { type: Date, min: '1970-01-01', required: true },
     location: {
       type: PointSchema,
       index: '2dsphere',
+      required: true,
     },
   },
-  { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } }
+  {
+    collection: 'events',
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+    // { timestamps:true}
+  }
 );
 
 eventSchema.index({ pothole: 1 });
@@ -28,6 +33,16 @@ eventSchema.virtual('longitude').get(function() {
     ? this.coodinates[0]
     : null;
 });
+
+/*
+eventSchema.pre('save', function (next) {
+  const doc = this
+  doc.createdAt = Date.now()
+  doc.updatedAt = Date.now()
+  doc.secret = uuidv4() #const uuidv4 = require('uuid/v4')
+  next()
+})
+*/
 
 eventSchema.set('toJSON', { getters: true, virtuals: true });
 
