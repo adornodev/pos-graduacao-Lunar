@@ -301,3 +301,13 @@ yarn add express-async-errors
 ## Tratativa de mensagens de erro
 
 yarn add youch
+
+# Docker
+
+docker run --name lunar_mongo -p 27017:27017 -e MONGO_INITDB_ROOT_USERNAME=lunaradmin -e MONGO_INITDB_ROOT_PASSWORD=lunar123 -e MONGO_INITDB_DATABASE=lunar -d -t mongo
+
+mongodbcompass: mongodb://lunaradmin:lunar123@localhost:27017/lunar
+
+# Mongo
+
+yarn add mongoose
