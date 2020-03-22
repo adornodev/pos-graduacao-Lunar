@@ -4,6 +4,8 @@ import {NavigationContainer} from '@react-navigation/native';
 import Main from './pages/Main';
 import Collector from './pages/Collector';
 
+import MainRoutes from './routes/main.routes';
+
 const Stack = createStackNavigator();
 
 export default function Routes() {
@@ -21,7 +23,7 @@ export default function Routes() {
         }}>
         <Stack.Screen
           name="Lunar"
-          component={Main}
+          component={MainRoutes}
           options={{title: 'Lunar'}}
         />
         <Stack.Screen
