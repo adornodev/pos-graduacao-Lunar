@@ -5,7 +5,6 @@ import '../../config/ReactotronConfig';
 import PropTypes from 'prop-types';
 
 import {Container} from './styles';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 
 export default class Main extends Component {
   static propTypes = {
