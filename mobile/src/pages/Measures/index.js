@@ -6,6 +6,7 @@ import {
   setUpdateIntervalForType,
 } from 'react-native-sensors';
 
+import Geolocation from 'react-native-geolocation-service';
 import {Accelerometer} from '../../models/Accelerometer';
 import AsyncStorage from '@react-native-community/async-storage';
 
@@ -33,10 +34,50 @@ export default class MeasuresScreen extends Component {
     x: 0,
     y: 0,
     z: 0,
+    geolocation: {
+      latitude: 0,
+      longitude: 0,
+      maximumAge: 2000,
+      timeout: 20000,
+      distanceFilter: 0,
+      enableHighAccuracy: true,
+    },
+    watchId: 0,
     sub: null,
     isActive: false,
     measurements: [],
     settings: {interval: 500, batch_size: 10},
+  };
+
+  findCoordinates = () => {
+    const {geolocation} = this.state;
+
+    Geolocation.getCurrentPosition(
+      position => {
+        const initialPosition = JSON.stringify(position);
+        console.log(initialPosition);
+        //this.setState({initialPosition});
+      },
+      error => console.error(error),
+      geolocation
+    );
+
+    const watchId = Geolocation.watchPosition(
+      position => {
+        const lastPosition = JSON.stringify(position);
+        console.log('last: ');
+        console.log(lastPosition);
+        //this.setState({lastPosition});
+      },
+      null,
+      {
+        distanceFilter: geolocation.distanceFilter,
+        fastestInterval: 1000,
+        interval: 3000,
+      }
+    );
+
+    this.setState({watchId});
   };
 
   storeData = async measurements => {
@@ -76,12 +117,14 @@ export default class MeasuresScreen extends Component {
       this.setState({measurements: JSON.parse(measurements)});
     }
     const {settings} = this.state;
-
+    /*
     setInterval(() => {
       console.log('teste');
     }, 5000);
-
+*/
     setUpdateIntervalForType(SensorTypes.accelerometer, settings.interval);
+
+    this.findCoordinates();
   }
 
   async componentDidUpdate(prevProps, prevState) {
@@ -98,7 +141,7 @@ export default class MeasuresScreen extends Component {
   }
 
   async componentWillUnmount() {
-    let {sub, isActive, measurements} = this.state;
+    let {sub, isActive, measurements, watchId} = this.state;
 
     if (sub) {
       sub.unsubscribe();
@@ -108,8 +151,19 @@ export default class MeasuresScreen extends Component {
       await AsyncStorage.setItem('measurements', JSON.stringify(measurements));
     }
 
+    if (watchId) {
+      Geolocation.clearWatch(watchId);
+      watchId = null;
+    }
+
     isActive = false;
-    this.setState({sub: null, isActive: !isActive, measurements: []});
+
+    this.setState({
+      sub: null,
+      isActive: !isActive,
+      measurements: [],
+      watchId: watchId,
+    });
   }
 
   render() {
@@ -119,7 +173,9 @@ export default class MeasuresScreen extends Component {
       <Container>
         <AccelerometerButton
           isActive={isActive}
-          onPress={() => this.handleStartAccelerometer(isActive)}>
+          onPress={() => {
+            this.handleStartAccelerometer(isActive);
+          }}>
           <AccelerometerButtonText>
             {isActive ? 'Stop' : 'Start'}
           </AccelerometerButtonText>
