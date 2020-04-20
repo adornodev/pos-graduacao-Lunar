@@ -8,7 +8,7 @@ export class Lunar {
   }
 
   getCSVLine(sep = ';') {
-    const {accelerometer, geolocation} = this;
+    const {accelerometer, geolocation, id} = this;
     const values = [
       id,
       accelerometer.timestamp,

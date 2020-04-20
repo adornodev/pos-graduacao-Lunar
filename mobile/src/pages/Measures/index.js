@@ -29,6 +29,8 @@ import {
   AccelerometerAxisKey,
   AccelerometerAxisValue,
   AccelerometerLabel,
+  EventButton,
+  EventButtonText,
 } from './styles';
 
 const Value = ({name, value}) => (
@@ -87,16 +89,6 @@ class MeasuresScreen extends Component {
     const {
       geolocation: {settings},
     } = this.state;
-
-    // Get current location
-    Geolocation.getCurrentPosition(
-      position => {
-        const initialPosition = JSON.stringify(position);
-        //console.log(initialPosition);
-      },
-      error => console.error(error),
-      settings
-    );
 
     // Watching changes in geolocation
     const watchId = Geolocation.watchPosition(
@@ -226,6 +218,48 @@ class MeasuresScreen extends Component {
     }
   }
 
+  handleSpeedBumpEvent = () => {
+    const {
+      geolocation: {settings},
+      accelerometer,
+    } = this.state;
+
+    // Get current location
+    Geolocation.getCurrentPosition(
+      currentPosition => {
+        const accelerometerObj = new Accelerometer(
+          accelerometer.x,
+          accelerometer.y,
+          accelerometer.z,
+          accelerometer.timestamp
+        );
+
+        const currentGeoObj = new Geo(
+          currentPosition.coords.latitude,
+          currentPosition.coords.longitude,
+          currentPosition.timestamp
+        );
+
+        const lunarObj = new Lunar(
+          cloneDeep(accelerometerObj),
+          cloneDeep(currentGeoObj)
+        );
+
+        alert(lunarObj.getCSVLine());
+      },
+      error => console.error(error),
+      settings
+    );
+
+    /*
+    if (!currentPosition) {
+      alert('Failed to get current GPS position');
+    } else {
+      alert('Event successfully registered');
+    }
+    */
+  };
+
   render() {
     const {
       accelerometer: {x, y, z},
@@ -243,6 +277,14 @@ class MeasuresScreen extends Component {
             {isActive ? 'Stop' : 'Start'}
           </AccelerometerButtonText>
         </AccelerometerButton>
+
+        <EventButton
+          onPress={() => {
+            this.handleSpeedBumpEvent();
+          }}>
+          <EventButtonText>SpeedBump</EventButtonText>
+        </EventButton>
+
         <AccelerometerLabel>Accelerometer values</AccelerometerLabel>
         <Value name="x" value={x} />
         <Value name="y" value={y} />
