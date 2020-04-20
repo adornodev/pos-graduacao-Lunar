@@ -1,14 +1,25 @@
 import React, {Component} from 'react';
 
+import {withHub} from '../../Hub.js';
+import {EVENT_TEST} from '../../Events';
+
 import {
-  accelerometer,
+  accelerometer as acc,
   SensorTypes,
   setUpdateIntervalForType,
 } from 'react-native-sensors';
 
+import has from 'lodash/has';
+
 import Geolocation from 'react-native-geolocation-service';
+
 import {Accelerometer} from '../../models/Accelerometer';
+import {Lunar} from '../../models/Lunar';
+import {Geo} from '../../models/Geo';
+
 import AsyncStorage from '@react-native-community/async-storage';
+
+import cloneDeep from 'lodash/cloneDeep';
 
 import {
   Container,
@@ -29,145 +40,197 @@ const Value = ({name, value}) => (
   </AccelerometerValuesContainer>
 );
 
-export default class MeasuresScreen extends Component {
-  state = {
-    x: 0,
-    y: 0,
-    z: 0,
-    geolocation: {
-      latitude: 0,
-      longitude: 0,
-      maximumAge: 2000,
-      timeout: 20000,
-      distanceFilter: 0,
-      enableHighAccuracy: true,
-    },
-    watchId: 0,
-    sub: null,
-    isActive: false,
-    measurements: [],
-    settings: {interval: 500, batch_size: 10},
-  };
+class MeasuresScreen extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      accelerometer: {
+        x: 0,
+        y: 0,
+        z: 0,
+        timestamp: null,
+        settings: {
+          interval: 500,
+        },
+      },
+      geolocation: {
+        latitude: 0,
+        longitude: 0,
+        timestamp: null,
+        settings: {
+          maximumAge: 2000,
+          timeout: 20000,
+          distanceFilter: 0,
+          enableHighAccuracy: true,
+          fastestInterval: 1000,
+          interval: 3000,
+        },
+        subscribeId: 0,
+      },
+      settings: {
+        batchSize: 10,
+      },
+      measurements: [],
+      isActive: false,
+    };
+
+    this.accelerometerSubscriber = null;
+
+    this.findCoordinates = this.findCoordinates.bind(this);
+    this.storeData = this.storeData.bind(this);
+    this.loadData = this.loadData.bind(this);
+    this.handleStartAccelerometer = this.handleStartAccelerometer.bind(this);
+  }
 
   findCoordinates = () => {
-    const {geolocation} = this.state;
+    const {
+      geolocation: {settings},
+    } = this.state;
 
+    // Get current location
     Geolocation.getCurrentPosition(
       position => {
         const initialPosition = JSON.stringify(position);
-        console.log(initialPosition);
-        //this.setState({initialPosition});
+        //console.log(initialPosition);
       },
       error => console.error(error),
-      geolocation
+      settings
     );
 
+    // Watching changes in geolocation
     const watchId = Geolocation.watchPosition(
       position => {
-        const lastPosition = JSON.stringify(position);
-        console.log('last: ');
-        console.log(lastPosition);
-        //this.setState({lastPosition});
+        //console.log(`last: ${Object.values(position)}`);
+        if (position && has(position, 'coords')) {
+          this.setState({
+            geolocation: {
+              latitude: position['coords']['latitude'],
+              longitude: position['coords']['longitude'],
+              timestamp: position['timestamp'],
+            },
+          });
+        }
       },
       null,
       {
-        distanceFilter: geolocation.distanceFilter,
-        fastestInterval: 1000,
-        interval: 3000,
+        distanceFilter: settings.distanceFilter,
+        fastestInterval: settings.fastestInterval,
+        interval: settings.interval,
       }
     );
 
-    this.setState({watchId});
+    this.setState({geolocation: {subscribeId: watchId}});
   };
 
   storeData = async measurements => {
     try {
-      await AsyncStorage.setItem('measurements', 'stored value');
+      if (measurements && measurements.length)
+        await AsyncStorage.setItem(
+          'measurements',
+          JSON.stringify(measurements)
+        );
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  loadData = async () => {
+    const measurements = await AsyncStorage.getItem('measurements');
+    return measurements || [];
+  };
+
+  handleResetStoredData = async () => {
+    try {
+      await AsyncStorage.setItem('measurements', JSON.stringify([]));
+
+      this.props.notify(EVENT_TEST, []);
     } catch (e) {
       console.error(e);
     }
   };
 
   handleStartAccelerometer = isActive => {
-    let {sub, measurements} = this.state;
-
     if (isActive) {
-      sub.unsubscribe();
+      this.accelerometerSubscriber.unsubscribe();
     } else {
-      sub = accelerometer.subscribe(({x, y, z, timestamp}) => {
-        const {measurements} = this.state;
+      this.accelerometerSubscriber = acc.subscribe(({x, y, z, timestamp}) => {
+        const {measurements, settings, geolocation} = this.state;
+
+        const accelerometerObj = new Accelerometer(x, y, z, timestamp);
+        const currentGeoObj = new Geo(
+          geolocation.latitude,
+          geolocation.longitude,
+          geolocation.timestamp
+        );
+        let lunarObj = new Lunar(
+          cloneDeep(accelerometerObj),
+          cloneDeep(currentGeoObj)
+        );
+
         this.setState({
-          x,
-          y,
-          z,
-          measurements: [
-            ...measurements,
-            new Accelerometer(x, y, z).getCSVLine(),
-          ],
+          accelerometer: {x, y, z, timestamp},
+          measurements: [...measurements, lunarObj.getCSVLine()],
         });
+
+        if (measurements.length >= settings.batchSize) {
+          this.storeData(measurements);
+
+          this.props.notify(EVENT_TEST, measurements);
+
+          this.setState(s => {
+            s.measurements = [];
+            return s;
+          });
+        }
       });
     }
 
-    this.setState({isActive: !isActive, sub});
+    this.setState({
+      isActive: !isActive,
+    });
   };
 
   async componentDidMount() {
-    const measurements = await AsyncStorage.getItem('measurements');
+    const {
+      accelerometer: {settings},
+    } = this.state;
+
+    const measurements = await this.loadData();
     if (measurements) {
       this.setState({measurements: JSON.parse(measurements)});
     }
-    const {settings} = this.state;
-    /*
-    setInterval(() => {
-      console.log('teste');
-    }, 5000);
-*/
+
     setUpdateIntervalForType(SensorTypes.accelerometer, settings.interval);
 
+    // Start GPS collector
     this.findCoordinates();
   }
 
-  async componentDidUpdate(prevProps, prevState) {
-    const {measurements, settings} = this.state;
-
-    if (measurements.length >= settings.batch_size) {
-      if (prevState.measurements !== measurements) {
-        await AsyncStorage.setItem(
-          'measurements',
-          JSON.stringify(measurements)
-        );
-      }
-    }
-  }
-
   async componentWillUnmount() {
-    let {sub, isActive, measurements, watchId} = this.state;
+    const {
+      measurements,
+      geolocation: {subscribeId},
+    } = this.state;
 
-    if (sub) {
-      sub.unsubscribe();
+    if (this.accelerometerSubscriber) {
+      this.accelerometerSubscriber.unsubscribe();
     }
 
-    if (measurements.length > 0) {
+    if (measurements && measurements.length > 0) {
       await AsyncStorage.setItem('measurements', JSON.stringify(measurements));
     }
 
-    if (watchId) {
-      Geolocation.clearWatch(watchId);
-      watchId = null;
+    if (subscribeId) {
+      Geolocation.clearWatch(subscribeId);
     }
-
-    isActive = false;
-
-    this.setState({
-      sub: null,
-      isActive: !isActive,
-      measurements: [],
-      watchId: watchId,
-    });
   }
 
   render() {
-    const {x, y, z, isActive} = this.state;
+    const {
+      accelerometer: {x, y, z},
+      isActive,
+    } = this.state;
 
     return (
       <Container>
@@ -188,3 +251,5 @@ export default class MeasuresScreen extends Component {
     );
   }
 }
+
+export default withHub(MeasuresScreen);

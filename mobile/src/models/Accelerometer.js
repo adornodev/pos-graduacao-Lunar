@@ -1,3 +1,5 @@
+import {v4 as uuidv4} from 'uuid';
+
 export class Accelerometer {
   constructor(x, y, z, timestamp = null) {
     this.x = x;
@@ -7,8 +9,9 @@ export class Accelerometer {
     if (!timestamp) {
       timestamp = this.getCurrentUTCTicks().toString();
     }
-
     this.timestamp = timestamp;
+
+    this.id = uuidv4();
   }
 
   getCurrentUTCTicks() {
@@ -18,9 +21,24 @@ export class Accelerometer {
 
   getCSVLine(sep = ';') {
     const {x, y, z, timestamp} = this;
+    const values = [timestamp, x, y, z];
 
-    return `${x}${sep}${y}${sep}${z}${sep}${timestamp || ''}`;
+    return values.join(sep);
+  }
+
+  static fromCSVLines(lines, sep = ';') {
+    let objects = [];
+
+    if (!lines || (Array.isArray(lines) && lines.length < 1)) return objects;
+
+    lines.forEach(line => {
+      var values = line.split(sep);
+
+      objects.push(
+        new Accelerometer(values[1], values[2], values[3], values[0])
+      );
+    });
+
+    return objects;
   }
 }
-
-//export default new Accelerometer();

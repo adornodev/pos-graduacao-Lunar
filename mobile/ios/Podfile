@@ -36,6 +36,9 @@ target 'mobile' do
 
   pod 'RNSensors', :path => '../node_modules/react-native-sensors'
 
+
+  pod 'RNFS', :path => '../node_modules/react-native-fs'
+
   target 'mobileTests' do
     inherit! :search_paths
     # Pods for testing
