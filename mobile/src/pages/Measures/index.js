@@ -10,6 +10,7 @@ import {
 } from 'react-native-sensors';
 
 import has from 'lodash/has';
+import uniq from 'lodash/uniq';
 
 import Geolocation from 'react-native-geolocation-service';
 
@@ -20,6 +21,8 @@ import {Geo} from '../../models/Geo';
 import AsyncStorage from '@react-native-community/async-storage';
 
 import cloneDeep from 'lodash/cloneDeep';
+
+import {AsyncStorageHelper} from '../../helpers/AsyncStorageHelper';
 
 import {
   Container,
@@ -71,7 +74,7 @@ class MeasuresScreen extends Component {
         subscribeId: 0,
       },
       settings: {
-        batchSize: 10,
+        batchSize: 5,
       },
       measurements: [],
       isActive: false,
@@ -115,20 +118,49 @@ class MeasuresScreen extends Component {
     this.setState({geolocation: {subscribeId: watchId}});
   };
 
-  storeData = async measurements => {
+  storeData = async (measurements, key = null) => {
     try {
-      if (measurements && measurements.length)
-        await AsyncStorage.setItem(
-          'measurements',
-          JSON.stringify(measurements)
+      if (measurements && measurements.length) {
+        let _key = key;
+        if (_key === null) {
+          _key = AsyncStorageHelper.Key;
+        }
+        console.log(
+          `Loading data on AsyncStorage in storeData method with ${_key} as key`
         );
+
+        const storagedMeasurements = await this.loadData(_key);
+
+        console.log(`Saving data on AsyncStorage with ${_key} as key`);
+
+        let obj = {};
+        obj[_key] = !storagedMeasurements
+          ? uniq(measurements)
+          : uniq([...storagedMeasurements, ...measurements]);
+
+        const msg = JSON.stringify(obj);
+
+        await AsyncStorage.setItem('measurements', msg);
+      }
     } catch (e) {
       console.error(e);
     }
   };
 
-  loadData = async () => {
-    const measurements = await AsyncStorage.getItem('measurements');
+  loadData = async (key = null) => {
+    let _key = key;
+
+    if (_key === null) {
+      _key = AsyncStorageHelper.Key;
+    }
+
+    console.log(`Loading data from AsyncStorage with ${_key} as key`);
+
+    const rawValue = await AsyncStorage.getItem('measurements');
+    if (!rawValue) return [];
+
+    const measurements = JSON.parse(rawValue)[_key];
+
     return measurements || [];
   };
 
@@ -168,7 +200,11 @@ class MeasuresScreen extends Component {
         if (measurements.length >= settings.batchSize) {
           this.storeData(measurements);
 
-          this.props.notify(EVENT_TEST, measurements);
+          console.log(
+            `Sending measurements (size ${measurements.length}) to hub`
+          );
+
+          this.props.notify(EVENT_TEST, cloneDeep(measurements));
 
           this.setState(s => {
             s.measurements = [];
@@ -189,9 +225,8 @@ class MeasuresScreen extends Component {
     } = this.state;
 
     const measurements = await this.loadData();
-    if (measurements) {
-      this.setState({measurements: JSON.parse(measurements)});
-    }
+
+    this.setState({measurements: measurements});
 
     setUpdateIntervalForType(SensorTypes.accelerometer, settings.interval);
 
@@ -222,6 +257,7 @@ class MeasuresScreen extends Component {
     const {
       geolocation: {settings},
       accelerometer,
+      measurements,
     } = this.state;
 
     // Get current location
@@ -242,22 +278,22 @@ class MeasuresScreen extends Component {
 
         const lunarObj = new Lunar(
           cloneDeep(accelerometerObj),
-          cloneDeep(currentGeoObj)
+          cloneDeep(currentGeoObj),
+          true
         );
 
-        alert(lunarObj.getCSVLine());
+        this.setState({
+          measurements: [...measurements, lunarObj.getCSVLine()],
+        });
+
+        alert('Event successfully registered');
       },
-      error => console.error(error),
+      error => {
+        console.error(error);
+        alert(error);
+      },
       settings
     );
-
-    /*
-    if (!currentPosition) {
-      alert('Failed to get current GPS position');
-    } else {
-      alert('Event successfully registered');
-    }
-    */
   };
 
   render() {

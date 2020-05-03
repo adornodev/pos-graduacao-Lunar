@@ -8,7 +8,7 @@ import {EVENT_TEST} from '../../Events';
 
 import cloneDeep from 'lodash/cloneDeep';
 
-import {Accelerometer} from '../../models/Accelerometer';
+import {Lunar} from '../../models/Lunar';
 
 import {
   Container,
@@ -25,6 +25,8 @@ import {
   MeasurementsList,
 } from './styles';
 
+import {DateTimeHelper} from '../../helpers/DateTimeHelper';
+
 class EventsScreen extends Component {
   constructor(props) {
     super(props);
@@ -32,280 +34,6 @@ class EventsScreen extends Component {
     this.state = {
       displayedMeasurements: [],
       measurements: [],
-      measurements_test: [
-        {
-          x: 2,
-          y: 3,
-          z: 10,
-          id: Math.random().toFixed(4),
-          lat: -23.32320323,
-          lng: 12.23131231,
-        },
-        {
-          x: 3,
-          y: 5,
-          z: 110,
-          id: Math.random().toFixed(4),
-          lat: -23.4444,
-          lng: 12.3333,
-        },
-        {
-          x: 4,
-          y: 3.23,
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 5,
-          y: 3.23,
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 6,
-          y: 3.23,
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 7,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 8,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 9,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 10,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 11,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 12,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 13,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 14,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 15,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: -16,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 17,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 18,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 19,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 20,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 21,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 22,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 23,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 24,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 25,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 26,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 27,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 28,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 29,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 30,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 31,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 32,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 33,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 34,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-        {
-          x: 35,
-          y: Math.random().toFixed(4),
-          z: 0,
-          id: Math.random().toFixed(4),
-          lat: -23.1111,
-          lng: 12.2222,
-        },
-      ],
       page: 0,
       pageSize: 10,
     };
@@ -316,22 +44,36 @@ class EventsScreen extends Component {
   }
 
   loadHubStoredMeasurements = message => {
+    console.log('Entrei loadHubStoredMeasurements');
     const {displayedMeasurements, pageSize} = this.state;
 
     const newMessage = message ? cloneDeep(message) : [];
 
-    const objects = Accelerometer.fromCSVLines(newMessage);
+    const objects = Lunar.fromCSVLines(newMessage);
 
     let paginatedObjects = [];
 
-    if (Array.isArray(displayedMeasurements) && !displayedMeasurements.length) {
-      paginatedObjects = objects.slice(0, pageSize);
+    /*
+    if (Array.isArray(displayedMeasurements)) {
+        paginatedObjects = !displayedMeasurements.length ? objects.slice(0, pageSize) : objects;
+    } else {
+      paginatedObjects = objects;
     }
+    */
 
-    this.setState({
-      measurements: objects,
-      displayedMeasurements: paginatedObjects,
-    });
+    paginatedObjects = objects;
+
+    this.setState(
+      {
+        measurements: objects,
+        displayedMeasurements: paginatedObjects,
+      },
+      () => {
+        //console.log(
+        //  `displayedMeasurements: ${this.state.displayedMeasurements}`
+        //);
+      }
+    );
   };
 
   loadStateStoredMeasurements = () => {
@@ -342,34 +84,37 @@ class EventsScreen extends Component {
 
     const moreMeasurements = measurements.slice(start, end);
 
-    this.setState(
-      {
-        displayedMeasurements: [...displayedMeasurements, ...moreMeasurements],
-      },
-      () => {
-        console.tron.warn(
-          `Tamanho do displayed result: ${displayedMeasurements.length}`
-        );
-      }
-    );
+    if (!moreMeasurements.length) {
+      this.setState(
+        {
+          displayedMeasurements: [...displayedMeasurements, ...moreMeasurements],
+        },
+        () => {
+          console.tron.warn(
+            `Tamanho do displayed result: ${displayedMeasurements.length}`
+          );
+        }
+      );
+    }
   };
 
   renderItem = ({item}) => {
     console.log(`item: ${Object.entries(item)}`);
+    console.log(item.isSpeedBump, typeof(item.isSpeedBump));
     return (
-      <Item key={item.id}>
+      <Item key={item.id} isSpeedBump={String(item.isSpeedBump)}>
         <Header>
-          <Timestamp>{item.timestamp}</Timestamp>
+          <Timestamp>{DateTimeHelper.ticksToDate(item.accelerometer.timestamp)}</Timestamp>
         </Header>
         <Content>
           <AccelerometerContent>
-            <AccelerometerValues>X: {item.x}</AccelerometerValues>
-            <AccelerometerValues>Y: {item.y}</AccelerometerValues>
-            <AccelerometerValues>Z: {item.z}</AccelerometerValues>
+            <AccelerometerValues>X: {new String(item.accelerometer.x).substr(0, 6)}</AccelerometerValues>
+            <AccelerometerValues>Y: {new String(item.accelerometer.y).substr(0, 6)}</AccelerometerValues>
+            <AccelerometerValues>Z: {new String(item.accelerometer.z).substr(0, 6)}</AccelerometerValues>
           </AccelerometerContent>
           <GPSContent>
-            <GPSValues>Lat: {item.lat}</GPSValues>
-            <GPSValues>Lng: {item.lng}</GPSValues>
+            <GPSValues>Lat: {item.geolocation.latitude}</GPSValues>
+            <GPSValues>Lng: {item.geolocation.longitude}</GPSValues>
           </GPSContent>
         </Content>
       </Item>
