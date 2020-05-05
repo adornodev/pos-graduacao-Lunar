@@ -11,7 +11,6 @@ export const Container = styled.View`
 `;
 
 export const Item = styled.View`
-  background: #fff;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.133916);
   border-radius: 10px;
   width: 90%;
@@ -21,6 +20,7 @@ export const Item = styled.View`
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  background: ${props => (props.isSpeedBump == 'true' ? '#86f4bb' : '#fff')};
 `;
 
 export const Content = styled.View`
