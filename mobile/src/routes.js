@@ -6,8 +6,9 @@ import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 
 import MeasuresScreen from './pages/Measures';
 import EventsScreen from './pages/Events';
+import SettingsScreen from './pages/Settings';
 
-import {MapScreen, SettingsScreen} from './screens';
+import {MapScreen} from './screens';
 
 //import AddButton from './components/AddButton';
 

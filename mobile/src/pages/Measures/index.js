@@ -123,7 +123,7 @@ class MeasuresScreen extends Component {
       if (measurements && measurements.length) {
         let _key = key;
         if (_key === null) {
-          _key = AsyncStorageHelper.Key;
+          _key = AsyncStorageHelper.key;
         }
         console.log(
           `Loading data on AsyncStorage in storeData method with ${_key} as key`
@@ -151,7 +151,7 @@ class MeasuresScreen extends Component {
     let _key = key;
 
     if (_key === null) {
-      _key = AsyncStorageHelper.Key;
+      _key = AsyncStorageHelper.key;
     }
 
     console.log(`Loading data from AsyncStorage with ${_key} as key`);
@@ -289,8 +289,9 @@ class MeasuresScreen extends Component {
         alert('Event successfully registered');
       },
       error => {
-        console.error(error);
-        alert(error);
+        const msg = 'ERROR: ' + error.message;
+        console.error(msg);
+        alert(msg);
       },
       settings
     );

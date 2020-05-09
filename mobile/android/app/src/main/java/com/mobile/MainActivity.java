@@ -6,7 +6,6 @@ import com.facebook.react.ReactRootView;
 import com.swmansion.gesturehandler.react.RNGestureHandlerEnabledRootView;
 import java.util.List;
 import java.util.Arrays;
-import com.rnfs.RNFSPackage;
 
 public class MainActivity extends ReactActivity {
 

@@ -45,7 +45,7 @@ class EventsScreen extends Component {
 
   loadHubStoredMeasurements = message => {
     console.log('Entrei loadHubStoredMeasurements');
-    const {displayedMeasurements, pageSize} = this.state;
+    //const {displayedMeasurements, pageSize} = this.state;
 
     const newMessage = message ? cloneDeep(message) : [];
 
@@ -99,8 +99,6 @@ class EventsScreen extends Component {
   };
 
   renderItem = ({item}) => {
-    console.log(`item: ${Object.entries(item)}`);
-    console.log(item.isSpeedBump, typeof(item.isSpeedBump));
     return (
       <Item key={item.id} isSpeedBump={String(item.isSpeedBump)}>
         <Header>
