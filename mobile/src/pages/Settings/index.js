@@ -5,11 +5,7 @@ import {FileHelper} from '../../helpers/FileHelper';
 
 var RNFS = require('react-native-fs');
 
-import {
-  Container,
-  DownloadButton,
-  DownloadButtonText
-} from './styles';
+import {Container, DownloadButton, DownloadButtonText} from './styles';
 
 class SettingsScreen extends Component {
   constructor(props) {
@@ -18,17 +14,17 @@ class SettingsScreen extends Component {
     this.state = {
       filenameTemplate: 'export_lunar_{date}.csv',
       messages: {
-         success:'Dados cadastrados com sucesso!',
-         noContent: 'Não há dados a serem salvos!'
-      }
-    }
+        success: 'Dados cadastrados com sucesso!',
+        noContent: 'Não há novos dados a serem salvos!',
+      },
+    };
 
     this.handleSaveOnCSVFile = this.handleSaveOnCSVFile.bind(this);
   }
 
   getCurrentAsyncStorageKey = () => {
     return AsyncStorageHelper.key;
-  }
+  };
 
   getAsyncStorageContent = async (key = '') => {
     if (!key) {
@@ -36,17 +32,17 @@ class SettingsScreen extends Component {
     }
 
     return await AsyncStorageHelper.getContent(key);
-  }
+  };
 
   getFullFilePath(filename) {
     return RNFS.ExternalDirectoryPath + '/' + filename;
   }
 
-  handleSaveOnCSVFile = async() => {
+  handleSaveOnCSVFile = async () => {
     const {filenameTemplate, messages} = this.state;
-    
+
     const dateKey = this.getCurrentAsyncStorageKey();
-    
+
     // Get filename
     const filename = FileHelper.getCsvFilename(filenameTemplate, dateKey);
 
@@ -58,37 +54,37 @@ class SettingsScreen extends Component {
     // Get the content
     const objects = await this.getAsyncStorageContent(dateKey);
     if (objects.length > 0) {
-      
       // Get csv content from object (list of string)
       const content = FileHelper.getCsvLines(objects);
 
       // Save it
       RNFS.appendFile(fullPath, content, 'utf8')
-        .then((success) => {
+        .then(async success => {
           alert(messages['success'] + '\r\n' + filename);
+
+          // Clear saved data
+          await AsyncStorageHelper.clearContent(dateKey);
         })
-        .catch((err) => {
+        .catch(err => {
           const msg = 'ERROR: ' + err.message;
           console.error(msg);
           alert(msg);
-        });      
-    }
-    else {
+        });
+    } else {
       alert(messages['noContent']);
     }
-  }
+  };
 
   render() {
     return (
-    <Container>
-      <DownloadButton onPress={() => {
+      <Container>
+        <DownloadButton
+          onPress={() => {
             this.handleSaveOnCSVFile();
           }}>
-        <DownloadButtonText>
-          DOWNLOAD
-        </DownloadButtonText>
-      </DownloadButton>
-    </Container>
+          <DownloadButtonText>DOWNLOAD</DownloadButtonText>
+        </DownloadButton>
+      </Container>
     );
   }
 }

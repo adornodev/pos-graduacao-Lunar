@@ -6,7 +6,7 @@ export class AsyncStorageHelper {
     return moment.utc().format('YYYYMMDD');
   }
 
-  static async getContent(key='') {
+  static async getContent(key = '') {
     if (!key) {
       key = AsyncStorageHelper.key;
     }
@@ -17,7 +17,7 @@ export class AsyncStorageHelper {
 
     const measurements = JSON.parse(rawValue)[key];
 
-    return measurements || []; 
+    return measurements || [];
   }
 
   static get oldKeys() {
@@ -31,5 +31,13 @@ export class AsyncStorageHelper {
     }
 
     return values;
+  }
+
+  static async clearContent(key = '') {
+    if (!key) {
+      key = AsyncStorageHelper.key;
+    }
+
+    await AsyncStorage.setItem('measurements', '[]');
   }
 }
