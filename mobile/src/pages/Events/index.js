@@ -4,7 +4,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import '../../config/ReactotronConfig';
 
 import {withHub} from '../../Hub';
-import {EVENT_TEST} from '../../Events';
+import {MEASUREMENTS_TO_DISPLAY} from '../../Events';
 
 import cloneDeep from 'lodash/cloneDeep';
 
@@ -40,11 +40,11 @@ class EventsScreen extends Component {
 
     this.loadHubStoredMeasurements = this.loadHubStoredMeasurements.bind(this);
 
-    props.attach(EVENT_TEST, this.loadHubStoredMeasurements, true);
+    props.attach(MEASUREMENTS_TO_DISPLAY, this.loadHubStoredMeasurements, true);
   }
 
   loadHubStoredMeasurements = message => {
-    console.log('Entrei loadHubStoredMeasurements');
+    // console.log('Entrei loadHubStoredMeasurements');
     //const {displayedMeasurements, pageSize} = this.state;
 
     const newMessage = message ? cloneDeep(message) : [];
@@ -63,17 +63,10 @@ class EventsScreen extends Component {
 
     paginatedObjects = objects;
 
-    this.setState(
-      {
-        measurements: objects,
-        displayedMeasurements: paginatedObjects,
-      },
-      () => {
-        //console.log(
-        //  `displayedMeasurements: ${this.state.displayedMeasurements}`
-        //);
-      }
-    );
+    this.setState({
+      measurements: objects,
+      displayedMeasurements: paginatedObjects,
+    });
   };
 
   loadStateStoredMeasurements = () => {
@@ -87,7 +80,10 @@ class EventsScreen extends Component {
     if (!moreMeasurements.length) {
       this.setState(
         {
-          displayedMeasurements: [...displayedMeasurements, ...moreMeasurements],
+          displayedMeasurements: [
+            ...displayedMeasurements,
+            ...moreMeasurements,
+          ],
         },
         () => {
           console.tron.warn(
@@ -102,13 +98,21 @@ class EventsScreen extends Component {
     return (
       <Item key={item.id} isSpeedBump={String(item.isSpeedBump)}>
         <Header>
-          <Timestamp>{DateTimeHelper.ticksToDate(item.accelerometer.timestamp)}</Timestamp>
+          <Timestamp>
+            {DateTimeHelper.ticksToDate(item.accelerometer.timestamp)}
+          </Timestamp>
         </Header>
         <Content>
           <AccelerometerContent>
-            <AccelerometerValues>X: {new String(item.accelerometer.x).substr(0, 6)}</AccelerometerValues>
-            <AccelerometerValues>Y: {new String(item.accelerometer.y).substr(0, 6)}</AccelerometerValues>
-            <AccelerometerValues>Z: {new String(item.accelerometer.z).substr(0, 6)}</AccelerometerValues>
+            <AccelerometerValues>
+              X: {new String(item.accelerometer.x).substr(0, 6)}
+            </AccelerometerValues>
+            <AccelerometerValues>
+              Y: {new String(item.accelerometer.y).substr(0, 6)}
+            </AccelerometerValues>
+            <AccelerometerValues>
+              Z: {new String(item.accelerometer.z).substr(0, 6)}
+            </AccelerometerValues>
           </AccelerometerContent>
           <GPSContent>
             <GPSValues>Lat: {item.geolocation.latitude}</GPSValues>

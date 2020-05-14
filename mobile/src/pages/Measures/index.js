@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
-
+import {View} from 'react-native';
 import {withHub} from '../../Hub.js';
-import {EVENT_TEST} from '../../Events';
+import {MEASUREMENTS_TO_DISPLAY} from '../../Events';
 
 import {
   accelerometer as acc,
@@ -11,6 +11,7 @@ import {
 
 import has from 'lodash/has';
 import uniq from 'lodash/uniq';
+import takeRight from 'lodash/takeRight';
 
 import Geolocation from 'react-native-geolocation-service';
 
@@ -26,23 +27,39 @@ import {AsyncStorageHelper} from '../../helpers/AsyncStorageHelper';
 
 import {
   Container,
+  ButtonsContainer,
+  ValuesContainer,
+  AccelerometerValuesContainer,
+  GpsValuesContainer,
+  Divider,
   AccelerometerButton,
   AccelerometerButtonText,
-  AccelerometerValuesContainer,
-  AccelerometerAxisKey,
-  AccelerometerAxisValue,
-  AccelerometerLabel,
   EventButton,
   EventButtonText,
+  ValueKey,
+  Value,
 } from './styles';
 
-const Value = ({name, value}) => (
-  <AccelerometerValuesContainer>
-    <AccelerometerAxisKey>{name}:</AccelerometerAxisKey>
-    <AccelerometerAxisValue>
-      {new String(value).substr(0, 6)}
-    </AccelerometerAxisValue>
-  </AccelerometerValuesContainer>
+const AccelerometerValue = ({name, value}) => (
+  <View style={{flexDirection: 'row'}}>
+    <ValueKey>{name}</ValueKey>
+    <Value style={{flex: 1}}>
+      {parseFloat(value)
+        ? new String(value).substr(0, 8).padEnd(8)
+        : '--------'}
+    </Value>
+  </View>
+);
+
+const GpsValue = ({name, value}) => (
+  <View style={{flexDirection: 'column'}}>
+    <ValueKey>{name}</ValueKey>
+    <Value>
+      {parseFloat(value)
+        ? new String(value).substr(0, 8).padEnd(8)
+        : '--------'}
+    </Value>
+  </View>
 );
 
 class MeasuresScreen extends Component {
@@ -56,7 +73,7 @@ class MeasuresScreen extends Component {
         z: 0,
         timestamp: null,
         settings: {
-          interval: 500,
+          interval: 250,
         },
       },
       geolocation: {
@@ -74,7 +91,12 @@ class MeasuresScreen extends Component {
         subscribeId: 0,
       },
       settings: {
-        batchSize: 5,
+        asyncStorage: {
+          batchSize: 20,
+        },
+        hub: {
+          bathSize: 10,
+        },
       },
       measurements: [],
       isActive: false,
@@ -86,6 +108,9 @@ class MeasuresScreen extends Component {
     this.storeData = this.storeData.bind(this);
     this.loadData = this.loadData.bind(this);
     this.handleStartAccelerometer = this.handleStartAccelerometer.bind(this);
+    this.processAccelerometerListener = this.processAccelerometerListener.bind(
+      this
+    );
   }
 
   findCoordinates = () => {
@@ -125,13 +150,11 @@ class MeasuresScreen extends Component {
         if (_key === null) {
           _key = AsyncStorageHelper.key;
         }
-        console.log(
-          `Loading data on AsyncStorage in storeData method with ${_key} as key`
-        );
-
         const storagedMeasurements = await this.loadData(_key);
 
-        console.log(`Saving data on AsyncStorage with ${_key} as key`);
+        console.log(
+          `Saving ${measurements.length} data on AsyncStorage with ${_key} as key`
+        );
 
         let obj = {};
         obj[_key] = !storagedMeasurements
@@ -139,6 +162,10 @@ class MeasuresScreen extends Component {
           : uniq([...storagedMeasurements, ...measurements]);
 
         const msg = JSON.stringify(obj);
+
+        console.log(
+          `Total data on AsyncStorage with ${_key} as key: ${obj[_key].length}`
+        );
 
         await AsyncStorage.setItem('measurements', msg);
       }
@@ -154,7 +181,7 @@ class MeasuresScreen extends Component {
       _key = AsyncStorageHelper.key;
     }
 
-    console.log(`Loading data from AsyncStorage with ${_key} as key`);
+    // console.log(`Loading data from AsyncStorage with ${_key} as key`);
 
     const rawValue = await AsyncStorage.getItem('measurements');
     if (!rawValue) return [];
@@ -168,50 +195,76 @@ class MeasuresScreen extends Component {
     try {
       await AsyncStorage.setItem('measurements', JSON.stringify([]));
 
-      this.props.notify(EVENT_TEST, []);
+      this.props.notify(MEASUREMENTS_TO_DISPLAY, []);
     } catch (e) {
       console.error(e);
     }
   };
 
+  processAccelerometerListener(x, y, z, timestamp) {
+    const {measurements, settings, geolocation} = this.state;
+
+    const accelerometerObj = new Accelerometer(x, y, z, timestamp);
+
+    const currentGeoObj = new Geo(
+      geolocation.latitude,
+      geolocation.longitude,
+      geolocation.timestamp
+    );
+
+    let lunarObj = new Lunar(
+      cloneDeep(accelerometerObj),
+      cloneDeep(currentGeoObj)
+    );
+
+    this.setState(s => {
+      s.accelerometer = {x, y, z, timestamp};
+      s.measurements = [...measurements, lunarObj.getCSVLine()];
+      return s;
+    });
+
+    // Sends measurements to AsyncStorage and Hub
+    if (measurements.length >= settings.asyncStorage.batchSize) {
+      this.storeData(measurements);
+
+      this.props.notify(
+        MEASUREMENTS_TO_DISPLAY,
+        cloneDeep(takeRight(measurements, settings.hub.bathSize))
+      );
+
+      this.setState(s => {
+        s.measurements = [];
+        return s;
+      });
+    }
+  }
+
   handleStartAccelerometer = isActive => {
     if (isActive) {
       this.accelerometerSubscriber.unsubscribe();
-    } else {
-      this.accelerometerSubscriber = acc.subscribe(({x, y, z, timestamp}) => {
-        const {measurements, settings, geolocation} = this.state;
 
-        const accelerometerObj = new Accelerometer(x, y, z, timestamp);
-        const currentGeoObj = new Geo(
-          geolocation.latitude,
-          geolocation.longitude,
-          geolocation.timestamp
-        );
-        let lunarObj = new Lunar(
-          cloneDeep(accelerometerObj),
-          cloneDeep(currentGeoObj)
-        );
+      const {measurements, settings} = this.state;
 
-        this.setState({
-          accelerometer: {x, y, z, timestamp},
-          measurements: [...measurements, lunarObj.getCSVLine()],
-        });
-
-        if (measurements.length >= settings.batchSize) {
-          this.storeData(measurements);
-
-          console.log(
-            `Sending measurements (size ${measurements.length}) to hub`
-          );
-
-          this.props.notify(EVENT_TEST, cloneDeep(measurements));
-
-          this.setState(s => {
-            s.measurements = [];
+      // Save values into AsyncStorage and Sends to Hub
+      if (measurements && measurements.length) {
+        this.setState(
+          s => {
+            s.measurements = measurements;
             return s;
-          });
-        }
-      });
+          },
+          () => {
+            this.storeData(measurements);
+            this.props.notify(
+              MEASUREMENTS_TO_DISPLAY,
+              cloneDeep(takeRight(measurements, settings.hub.bathSize))
+            );
+          }
+        );
+      }
+    } else {
+      this.accelerometerSubscriber = acc.subscribe(({x, y, z, timestamp}) =>
+        this.processAccelerometerListener(x, y, z, timestamp)
+      );
     }
 
     this.setState({
@@ -282,8 +335,9 @@ class MeasuresScreen extends Component {
           true
         );
 
-        this.setState({
-          measurements: [...measurements, lunarObj.getCSVLine()],
+        this.setState(s => {
+          s.measurements = [...measurements, lunarObj.getCSVLine()];
+          return s;
         });
 
         alert('Event successfully registered');
@@ -300,32 +354,43 @@ class MeasuresScreen extends Component {
   render() {
     const {
       accelerometer: {x, y, z},
+      geolocation: {latitude, longitude},
       isActive,
     } = this.state;
 
     return (
       <Container>
-        <AccelerometerButton
-          isActive={isActive}
-          onPress={() => {
-            this.handleStartAccelerometer(isActive);
-          }}>
-          <AccelerometerButtonText>
-            {isActive ? 'Stop' : 'Start'}
-          </AccelerometerButtonText>
-        </AccelerometerButton>
+        <ButtonsContainer>
+          <AccelerometerButton
+            isActive={isActive}
+            onPress={() => {
+              this.handleStartAccelerometer(isActive);
+            }}>
+            <AccelerometerButtonText>
+              {isActive ? 'Stop' : 'Start'}
+            </AccelerometerButtonText>
+          </AccelerometerButton>
 
-        <EventButton
-          onPress={() => {
-            this.handleSpeedBumpEvent();
-          }}>
-          <EventButtonText>SpeedBump</EventButtonText>
-        </EventButton>
-
-        <AccelerometerLabel>Accelerometer values</AccelerometerLabel>
-        <Value name="x" value={x} />
-        <Value name="y" value={y} />
-        <Value name="z" value={z} />
+          <EventButton
+            onPress={() => {
+              this.handleSpeedBumpEvent();
+            }}>
+            <EventButtonText>SpeedBump</EventButtonText>
+          </EventButton>
+        </ButtonsContainer>
+        <Divider />
+        <ValuesContainer>
+          <GpsValuesContainer>
+            <GpsValue name="lat" value={latitude} />
+            <GpsValue name="lng" value={longitude} />
+          </GpsValuesContainer>
+          <Divider />
+          <AccelerometerValuesContainer>
+            <AccelerometerValue name="x" value={x} />
+            <AccelerometerValue name="y" value={y} />
+            <AccelerometerValue name="z" value={z} />
+          </AccelerometerValuesContainer>
+        </ValuesContainer>
       </Container>
     );
   }
