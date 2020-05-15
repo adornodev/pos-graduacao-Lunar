@@ -5,19 +5,18 @@ export const Container = styled.View`
   flex: 1;
   justify-content: center;
   align-items: center;
-  background: #f5fcff;
+  background: #fff;
 `;
 
 export const DownloadButton = styled(RectButton)`
   justify-content: center;
   align-items: center;
-  width: 120px;
+  width: 240px;
   height: 120px;
   border-radius: 4px;
   margin: 10px;
   background: #7159c1;
 `;
-
 
 export const DownloadButtonText = styled.Text`
   font-size: 30px;

@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import {View} from 'react-native';
 import {withHub} from '../../Hub.js';
-import {MEASUREMENTS_TO_DISPLAY} from '../../Events';
+import {MEASUREMENTS_TO_DISPLAY, DOWNLOAD_DATA} from '../../Events';
 
 import {
   accelerometer as acc,
@@ -95,7 +95,10 @@ class MeasuresScreen extends Component {
           batchSize: 20,
         },
         hub: {
-          bathSize: 10,
+          bathSize: 100,
+        },
+        displayData: {
+          batchSize: 10,
         },
       },
       measurements: [],
@@ -111,6 +114,9 @@ class MeasuresScreen extends Component {
     this.processAccelerometerListener = this.processAccelerometerListener.bind(
       this
     );
+    this.hubSendMeasurementsToDownload = this.hubSendMeasurementsToDownload.bind(
+      this
+    );
   }
 
   findCoordinates = () => {
@@ -121,7 +127,6 @@ class MeasuresScreen extends Component {
     // Watching changes in geolocation
     const watchId = Geolocation.watchPosition(
       position => {
-        //console.log(`last: ${Object.values(position)}`);
         if (position && has(position, 'coords')) {
           this.setState({
             geolocation: {
@@ -143,6 +148,16 @@ class MeasuresScreen extends Component {
     this.setState({geolocation: {subscribeId: watchId}});
   };
 
+  hubSendMeasurementsToDownload(data, dateKey, forceDownload = false) {
+    const {
+      settings: {hub},
+    } = this.state;
+
+    if (forceDownload || (data && data.length >= hub.batchSize)) {
+      this.props.notify(DOWNLOAD_DATA, dateKey);
+    }
+  }
+
   storeData = async (measurements, key = null) => {
     try {
       if (measurements && measurements.length) {
@@ -152,10 +167,6 @@ class MeasuresScreen extends Component {
         }
         const storagedMeasurements = await this.loadData(_key);
 
-        console.log(
-          `Saving ${measurements.length} data on AsyncStorage with ${_key} as key`
-        );
-
         let obj = {};
         obj[_key] = !storagedMeasurements
           ? uniq(measurements)
@@ -163,8 +174,11 @@ class MeasuresScreen extends Component {
 
         const msg = JSON.stringify(obj);
 
+        // Check if is necessary send the msg to download_data hub
+        this.hubSendMeasurementsToDownload(obj[_key], _key);
+
         console.log(
-          `Total data on AsyncStorage with ${_key} as key: ${obj[_key].length}`
+          `Total on AsyncStorage with ${_key} as key: ${obj[_key].length}`
         );
 
         await AsyncStorage.setItem('measurements', msg);
@@ -180,8 +194,6 @@ class MeasuresScreen extends Component {
     if (_key === null) {
       _key = AsyncStorageHelper.key;
     }
-
-    // console.log(`Loading data from AsyncStorage with ${_key} as key`);
 
     const rawValue = await AsyncStorage.getItem('measurements');
     if (!rawValue) return [];
@@ -229,7 +241,7 @@ class MeasuresScreen extends Component {
 
       this.props.notify(
         MEASUREMENTS_TO_DISPLAY,
-        cloneDeep(takeRight(measurements, settings.hub.bathSize))
+        cloneDeep(takeRight(measurements, settings.displayData.bathSize))
       );
 
       this.setState(s => {
@@ -245,7 +257,7 @@ class MeasuresScreen extends Component {
 
       const {measurements, settings} = this.state;
 
-      // Save values into AsyncStorage and Sends to Hub
+      // Save values into AsyncStorage and Sends to Hubs
       if (measurements && measurements.length) {
         this.setState(
           s => {
@@ -254,9 +266,16 @@ class MeasuresScreen extends Component {
           },
           () => {
             this.storeData(measurements);
+
             this.props.notify(
               MEASUREMENTS_TO_DISPLAY,
-              cloneDeep(takeRight(measurements, settings.hub.bathSize))
+              cloneDeep(takeRight(measurements, settings.displayData.bathSize))
+            );
+
+            this.hubSendMeasurementsToDownload(
+              measurements,
+              AsyncStorageHelper.key,
+              true
             );
           }
         );

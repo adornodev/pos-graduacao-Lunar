@@ -1,5 +1,4 @@
 import React, {Component} from 'react';
-import AsyncStorage from '@react-native-community/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import '../../config/ReactotronConfig';
 
@@ -38,15 +37,12 @@ class EventsScreen extends Component {
       pageSize: 10,
     };
 
-    this.loadHubStoredMeasurements = this.loadHubStoredMeasurements.bind(this);
+    this.hubLoadStoredMeasurements = this.hubLoadStoredMeasurements.bind(this);
 
-    props.attach(MEASUREMENTS_TO_DISPLAY, this.loadHubStoredMeasurements, true);
+    props.attach(MEASUREMENTS_TO_DISPLAY, this.hubLoadStoredMeasurements, true);
   }
 
-  loadHubStoredMeasurements = message => {
-    // console.log('Entrei loadHubStoredMeasurements');
-    //const {displayedMeasurements, pageSize} = this.state;
-
+  hubLoadStoredMeasurements = message => {
     const newMessage = message ? cloneDeep(message) : [];
 
     const objects = Lunar.fromCSVLines(newMessage);

@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import {withHub} from '../../Hub.js';
+import {DOWNLOAD_DATA} from '../../Events';
 import {AsyncStorageHelper} from '../../helpers/AsyncStorageHelper';
 import {FileHelper} from '../../helpers/FileHelper';
 
@@ -14,13 +15,28 @@ class SettingsScreen extends Component {
     this.state = {
       filenameTemplate: 'export_lunar_{date}.csv',
       messages: {
-        success: 'Dados cadastrados com sucesso!',
+        manualSuccess: 'Dados cadastrados manualmente com sucesso!',
+        autoSuccess: 'Dados cadastrados automaticamente com sucesso!',
         noContent: 'Não há novos dados a serem salvos!',
       },
     };
 
     this.handleSaveOnCSVFile = this.handleSaveOnCSVFile.bind(this);
+    this.hubSaveMeasurements = this.hubSaveMeasurements.bind(this);
+
+    props.attach(DOWNLOAD_DATA, this.hubSaveMeasurements, false);
   }
+
+  hubSaveMeasurements = async message => {
+    const {messages} = this.state;
+    // console.log('Starting automatic download data to csv file');
+    const dateKey = message ? message : this.getCurrentAsyncStorageKey();
+
+    try {
+      await this.sendToCSVFile(dateKey);
+      console.log(messages['autoSuccess']);
+    } catch (e) {}
+  };
 
   getCurrentAsyncStorageKey = () => {
     return AsyncStorageHelper.key;
@@ -34,45 +50,51 @@ class SettingsScreen extends Component {
     return await AsyncStorageHelper.getContent(key);
   };
 
-  getFullFilePath(filename) {
-    return RNFS.ExternalDirectoryPath + '/' + filename;
-  }
-
   handleSaveOnCSVFile = async () => {
-    const {filenameTemplate, messages} = this.state;
+    const {messages} = this.state;
 
-    const dateKey = this.getCurrentAsyncStorageKey();
+    try {
+      // Get date key
+      const dateKey = this.getCurrentAsyncStorageKey();
+
+      // Call method that sends data to csv file
+      await this.sendToCSVFile(dateKey);
+
+      // Clear saved data
+      await AsyncStorageHelper.clearContent(dateKey);
+
+      alert(messages['manualSuccess']);
+    } catch (e) {
+      console.log(e);
+      alert(e);
+    }
+  };
+
+  sendToCSVFile = async dateKey => {
+    const {filenameTemplate} = this.state;
+
+    let result;
 
     // Get filename
     const filename = FileHelper.getCsvFilename(filenameTemplate, dateKey);
 
     // Get filepath
-    var fullPath = this.getFullFilePath(filename);
+    var fullPath = FileHelper.getFullFilePath(filename);
 
-    console.log('fullPath: ', fullPath);
-
-    // Get the content
+    // Get the content from async storage
     const objects = await this.getAsyncStorageContent(dateKey);
+
     if (objects.length > 0) {
       // Get csv content from object (list of string)
       const content = FileHelper.getCsvLines(objects);
 
       // Save it
-      RNFS.appendFile(fullPath, content, 'utf8')
-        .then(async success => {
-          alert(messages['success'] + '\r\n' + filename);
-
-          // Clear saved data
-          await AsyncStorageHelper.clearContent(dateKey);
-        })
-        .catch(err => {
-          const msg = 'ERROR: ' + err.message;
-          console.error(msg);
-          alert(msg);
-        });
+      result = RNFS.appendFile(fullPath, content, 'utf8');
     } else {
-      alert(messages['noContent']);
+      result = Promise.resolve(undefined);
     }
+
+    return result;
   };
 
   render() {

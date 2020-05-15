@@ -10,8 +10,6 @@ import SettingsScreen from './pages/Settings';
 
 import {MapScreen} from './screens';
 
-//import AddButton from './components/AddButton';
-
 const Tab = createBottomTabNavigator();
 
 export default function Routes() {

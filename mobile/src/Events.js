@@ -2,3 +2,4 @@
 // Ordered alfabetically to facilitate maintenance
 
 export const MEASUREMENTS_TO_DISPLAY = `MEASUREMENTS_TO_DISPLAY`;
+export const DOWNLOAD_DATA = `DOWNLOAD_DATA`;

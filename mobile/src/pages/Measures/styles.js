@@ -5,6 +5,7 @@ export const Container = styled.View`
   flex: 1;
   /*background: #f5fcff;*/
   padding: 0 40px;
+  background: #fff;
 `;
 
 export const ButtonsContainer = styled.View`

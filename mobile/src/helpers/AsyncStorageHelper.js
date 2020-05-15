@@ -38,6 +38,6 @@ export class AsyncStorageHelper {
       key = AsyncStorageHelper.key;
     }
 
-    await AsyncStorage.setItem('measurements', '[]');
+    await AsyncStorage.setItem('measurements', JSON.stringify([]));
   }
 }
