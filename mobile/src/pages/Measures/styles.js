@@ -8,9 +8,16 @@ export const Container = styled.View`
   background: #fff;
 `;
 
-export const ButtonsContainer = styled.View`
+export const ProcessButtonContainer = styled.View`
   flex: 1;
   /* background: #b8c32b; */
+  align-items: center;
+  flex-direction: row;
+`;
+
+export const EventButtonContainer = styled.View`
+  flex: 1;
+  /* background: #23231f; */
   justify-content: space-between;
   align-items: center;
   flex-direction: row;
@@ -45,8 +52,8 @@ export const Divider = styled.View`
 export const AccelerometerButton = styled(RectButton)`
   justify-content: center;
   align-items: center;
-  width: 120px;
   height: 120px;
+  width: 100%;
   border-radius: 4px;
   background: ${props => (props.isActive ? '#c40f3f' : '#68ed6a')};
 `;
@@ -54,14 +61,13 @@ export const AccelerometerButton = styled(RectButton)`
 export const EventButton = styled(RectButton)`
   justify-content: center;
   align-items: center;
-  width: 120px;
   height: 120px;
   border-radius: 4px;
   background: #7159c1;
 `;
 
 export const EventButtonText = styled.Text`
-  font-size: 30px;
+  font-size: 18px;
   text-align: center;
   margin: 10px;
   font-weight: bold;

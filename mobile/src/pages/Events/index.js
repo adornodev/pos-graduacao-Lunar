@@ -8,6 +8,7 @@ import {MEASUREMENTS_TO_DISPLAY} from '../../Events';
 import cloneDeep from 'lodash/cloneDeep';
 
 import {Lunar} from '../../models/Lunar';
+import {isArrayValid} from '../../helpers/ArrayHelper';
 
 import {
   Container,
@@ -39,7 +40,11 @@ class EventsScreen extends Component {
 
     this.hubLoadStoredMeasurements = this.hubLoadStoredMeasurements.bind(this);
 
-    props.attach(MEASUREMENTS_TO_DISPLAY, this.hubLoadStoredMeasurements, true);
+    props.attach(
+      MEASUREMENTS_TO_DISPLAY,
+      this.hubLoadStoredMeasurements,
+      false
+    );
   }
 
   hubLoadStoredMeasurements = message => {
@@ -47,17 +52,7 @@ class EventsScreen extends Component {
 
     const objects = Lunar.fromCSVLines(newMessage);
 
-    let paginatedObjects = [];
-
-    /*
-    if (Array.isArray(displayedMeasurements)) {
-        paginatedObjects = !displayedMeasurements.length ? objects.slice(0, pageSize) : objects;
-    } else {
-      paginatedObjects = objects;
-    }
-    */
-
-    paginatedObjects = objects;
+    let paginatedObjects = cloneDeep(objects);
 
     this.setState({
       measurements: objects,
@@ -66,33 +61,36 @@ class EventsScreen extends Component {
   };
 
   loadStateStoredMeasurements = () => {
-    const {measurements, page, pageSize, displayedMeasurements} = this.state;
+    const {page, pageSize} = this.state;
+    let {measurements, displayedMeasurements} = this.state;
 
     const start = page * pageSize;
     const end = page * pageSize + pageSize;
 
+    if (!isArrayValid(measurements)) {
+      measurements = [];
+    }
+
+    if (!isArrayValid(displayedMeasurements)) {
+      displayedMeasurements = [];
+    }
+
     const moreMeasurements = measurements.slice(start, end);
 
     if (!moreMeasurements.length) {
-      this.setState(
-        {
-          displayedMeasurements: [
-            ...displayedMeasurements,
-            ...moreMeasurements,
-          ],
-        },
-        () => {
-          console.tron.warn(
-            `Tamanho do displayed result: ${displayedMeasurements.length}`
-          );
-        }
-      );
+      this.setState(s => {
+        s.displayedMeasurements = [
+          ...displayedMeasurements,
+          ...moreMeasurements,
+        ];
+        return s;
+      });
     }
   };
 
   renderItem = ({item}) => {
     return (
-      <Item key={item.id} isSpeedBump={String(item.isSpeedBump)}>
+      <Item key={item.id} speedBumpId={String(item.speedBumpId)}>
         <Header>
           <Timestamp>
             {DateTimeHelper.ticksToDate(item.accelerometer.timestamp)}

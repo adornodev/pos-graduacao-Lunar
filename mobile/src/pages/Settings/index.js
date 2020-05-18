@@ -3,6 +3,7 @@ import {withHub} from '../../Hub.js';
 import {DOWNLOAD_DATA} from '../../Events';
 import {AsyncStorageHelper} from '../../helpers/AsyncStorageHelper';
 import {FileHelper} from '../../helpers/FileHelper';
+import {isArrayValid} from '../../helpers/ArrayHelper';
 
 var RNFS = require('react-native-fs');
 
@@ -34,8 +35,14 @@ class SettingsScreen extends Component {
 
     try {
       await this.sendToCSVFile(dateKey);
+
       console.log(messages['autoSuccess']);
-    } catch (e) {}
+
+      // Clear saved data
+      await AsyncStorageHelper.clearContent(dateKey);
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   getCurrentAsyncStorageKey = () => {
@@ -84,9 +91,11 @@ class SettingsScreen extends Component {
     // Get the content from async storage
     const objects = await this.getAsyncStorageContent(dateKey);
 
-    if (objects.length > 0) {
+    if (isArrayValid(objects)) {
       // Get csv content from object (list of string)
-      const content = FileHelper.getCsvLines(objects);
+      let content = FileHelper.getCsvLines(objects);
+
+      content += '\n';
 
       // Save it
       result = RNFS.appendFile(fullPath, content, 'utf8');

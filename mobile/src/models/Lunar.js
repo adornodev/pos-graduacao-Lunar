@@ -4,18 +4,18 @@ import {Accelerometer} from './Accelerometer';
 import {Geo as Geolocation} from './Geo';
 
 export class Lunar {
-  constructor(accelerometer, geolocation, isSpeedBump = false) {
+  constructor(accelerometer, geolocation, speedBumpId = 0) {
     this.accelerometer = accelerometer;
     this.geolocation = geolocation;
     this.id = uuidv4();
-    this.isSpeedBump = isSpeedBump;
+    this.speedBumpId = speedBumpId;
   }
 
   getCSVLine(sep = ';') {
-    const {accelerometer, geolocation, id, isSpeedBump} = this;
+    const {accelerometer, geolocation, id, speedBumpId} = this;
     const values = [
       id,
-      isSpeedBump,
+      speedBumpId,
       accelerometer.timestamp,
       accelerometer.x,
       accelerometer.y,

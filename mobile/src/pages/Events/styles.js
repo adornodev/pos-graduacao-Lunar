@@ -20,7 +20,12 @@ export const Item = styled.View`
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  background: ${props => (props.isSpeedBump == 'true' ? '#86f4bb' : '#fff')};
+  background: ${props =>
+    props.speedBumpId === '1'
+      ? '#86f4bb'
+      : props.speedBumpId === '2'
+      ? '#009b7a'
+      : '#fff'};
 `;
 
 export const Content = styled.View`
