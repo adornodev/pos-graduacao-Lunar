@@ -1,2 +1,4 @@
 .venv/
 *.cpython-36.pyc
+out/
+old.ipynb
