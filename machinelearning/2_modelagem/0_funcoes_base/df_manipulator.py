@@ -29,7 +29,7 @@ def apply_describe(df):
     result = pd.DataFrame(eda_df)
     display(result)
 
-def load_dataframe(name, ref_dir, delimiter =';', header = []):
+def load_dataframe(name, ref_dir, delimiter=';', header=[]):
     full_path = os.path.join(ref_dir,name)
 
     if len(header)>0:
@@ -46,6 +46,8 @@ def remove_nan(df, subset=None):
 def set_index(df, col, inplace):
   if not col:
     raise Exception('O parâmetro "col" é obrigatório!')
+  if col not in df.columns:
+    raise Exception('Esta coluna não existe')
   return df.set_index(col, inplace = inplace)
 
 def filter_by_dates(df, start_date, end_date = None, format = None):
