@@ -1,14 +1,24 @@
 import os
+import re
 
-def get_out_filename(prefix, ref_dir, in_filename):
+def get_out_filename(prefix, ref_dir, in_filenames):
   result = ''
 
   if not prefix:
     prefix = ''
   if not ref_dir:
     ref_dir = './'
-  if not in_filename:
+  if not in_filenames:
     return result
+
+  in_filename = ''
+  if isinstance(in_filenames, list):
+    txt = " ".join(in_filenames)
+    in_filename = 'export_lunar_' + "_".join(re.sub("[^\d{4}\d{2}\d{2}]", ' ', txt).strip().split())
+    if '.csv' not in in_filename:
+      in_filename = in_filename + '.csv'
+  else:
+    in_filename = in_filenames
 
   in_prefix_idx = in_filename.find('_')
   in_prefix = ''

@@ -37,15 +37,27 @@ def apply_describe(df):
     result = pd.DataFrame(eda_df)
     display(result)
 
-def load_dataframe(name, ref_dir, delimiter=';', header=[]):
+def load_dataframes(names, ref_dir, delimiter=';', header=[]):
+  result = None
+
+  if isinstance(names,str):
+    names = [names]
+
+  for name in names:
+    _df = None
     full_path = os.path.join(ref_dir,name)
 
     if len(header)>0:
-        df = pd.read_csv(full_path, sep=delimiter, names=header, header=0) 
+        _df = pd.read_csv(full_path, sep=delimiter, names=header, header=0) 
     else:
-        df = pd.read_csv(full_path, sep=delimiter) 
+        _df = pd.read_csv(full_path, sep=delimiter) 
 
-    return df
+    if result is None:
+        result = _df.copy()
+    else:
+        result = result.append(_df, ignore_index=True)
+
+  return result
 
 def remove_nan(df, subset=None, how='any'):
   new_df = df.dropna(axis=0, how=how, thresh=None, subset=None, inplace=False)
