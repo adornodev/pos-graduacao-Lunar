@@ -100,7 +100,5 @@ def plot_timeseries(df, variables_array, start_date, end_date, ylabel='', days_i
     if len(ylabel) > 0:
         plt.ylabel(ylabel)
     if save_figure_name:
-        plt.savefig(save_figure_name, dpi=500)
+        plt.savefig(save_figure_name) #dpi=500
     plt.show()
-
-    #return df_filtered
