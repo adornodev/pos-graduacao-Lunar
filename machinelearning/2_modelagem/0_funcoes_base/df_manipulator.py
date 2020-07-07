@@ -128,3 +128,80 @@ def get_affected_timestamps_by_speed_bumps(df, indexes, mapping_window_width, ma
       result[sb_id][sb_idx] = search_values
 
   return result
+
+def range2(start,end,step):
+    i = start
+    while i < end:
+        yield i
+        i += step
+    yield end
+    
+def get_initial_timestamps(df, column):
+    initial_timestamp_by_speed_bump = df.sort_values('timestamp').groupby(column).head(1).where(df[column] > 0).dropna()[[column]]
+    return initial_timestamp_by_speed_bump[column].to_dict()
+
+def create_region_split_feature(df, region_id_column, aux_split_column):
+    res = np.zeros(len(df[region_id_column]))
+
+    res[0] = df[region_id_column].iloc[0]
+
+    count = 0
+    i = 0
+    vals = {}
+
+    for idx, val in df[region_id_column].iloc[0:].iteritems():
+        vals[i] = val
+        
+        if val == 0:
+            res[i] = count
+        elif val == 1:
+            if vals[i-1] == 0:
+                count += 1
+            res[i] = count
+        i +=1
+
+    df[aux_split_column] = res.astype(int)
+    df[aux_split_column].loc[df[aux_split_column] < 1] = 1
+
+def custom_train_test_split(df_in, column_to_group_by, region_id_column, aux_split_column, train_ignored_columns, chunks_size):
+    df = df_in.copy()
+
+    # Get initial timestamps from each speedbump
+    initial_timestamp_by_speed_bump = get_initial_timestamps(df, column_to_group_by)
+    
+    # Create auxiliar feature to split data into train and test
+    create_region_split_feature(df, region_id_column, aux_split_column)
+
+    #################### Run main logic ##########################################
+    total_region_1 = df[aux_split_column][-1]
+    region_1_per_chunk = int(total_region_1/chunks_size)
+
+
+    print(f'{region_1_per_chunk} eventos por bloco no total de {total_region_1} eventos e {chunks_size} blocos', '\n')
+    print('\nQuebra-molas nº:')
+
+    prev_i = 0
+    iterations = 0
+    x_trains, x_tests, y_trains, y_tests = [], [], [], []
+
+    for i in range2(region_1_per_chunk, total_region_1, region_1_per_chunk):
+        df_i = (df.loc[(df[aux_split_column] > prev_i) & (df[aux_split_column] <= i)])
+
+        data_i =  df_i.drop(train_ignored_columns, axis=1).values
+        target_i = df_i[region_id_column].values
+
+        distribution_text = str(0) + ' (' + str(round(df_i[region_id_column].value_counts()[0]/len(df_i) * 100,1)) + '%' + ') ' + str(1) + ' (' + str(round(df_i[region_id_column].value_counts()[1]/len(df_i) * 100,1)) + '%' + ')'
+        
+        print('{:>02d} -> {:>02d} :{:>20s}'.format(prev_i, i, distribution_text))
+
+        if iterations % 2 == 0:
+            x_trains.append(data_i)
+            y_trains.append(target_i)
+        else:
+            x_tests.append(data_i)
+            y_tests.append(target_i)
+
+        prev_i = i
+        iterations += 1
+
+    return df, x_trains, x_tests, y_trains, y_tests   
