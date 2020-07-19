@@ -205,3 +205,35 @@ def custom_train_test_split(df_in, column_to_group_by, region_id_column, aux_spl
         iterations += 1
 
     return df, x_trains, x_tests, y_trains, y_tests   
+
+def transform_to_supervised(df, previous_steps, forecast_steps, dropnan=True):
+
+    # original column names
+    col_names = df.columns
+    
+    # list of columns and corresponding names we'll build from 
+    # the originals found in the input DataFrame
+    cols, names = list(), list()
+
+    # input sequence (t-n, ... t-1)
+    for i in range(previous_steps, 0, -1):
+        cols.append(df.shift(i))
+        names += [('%s(t-%d)' % (col_name, i)) for col_name in col_names]
+
+    # forecast sequence (t, t+1, ... t+n)
+    for i in range(0, forecast_steps):
+        cols.append(df.shift(-i))
+        if i == 0:
+            names += [('%s(t)' % col_name) for col_name in col_names]
+        else:
+            names += [('%s(t+%d)' % (col_name, i)) for col_name in col_names]
+
+    # put all the columns together into a single aggregated DataFrame
+    agg = pd.concat(cols, axis=1)
+    agg.columns = names
+
+    # drop rows with NaN values
+    if dropnan:
+        agg.dropna(inplace=True)
+
+    return agg
